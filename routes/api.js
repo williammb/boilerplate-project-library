@@ -16,12 +16,6 @@ const CONNECTION_STRING = process.env.DB;
 //Example connection: MongoClient.connect(MONGODB_CONNECTION_STRING, function(err, db) {});
 
 module.exports = function(app) {
-    async function teste(db, books) {
-
-        return result;
-    }
-
-
     app.route('/api/books')
         .get(function(req, res) {
             MongoClient.connect(CONNECTION_STRING, (err, db) => {
@@ -79,7 +73,7 @@ module.exports = function(app) {
             if (err) {
                 res.json({ error: 'Database error: ' + err });
             }
-            db.collection(books).remove({}, (err, data) => {
+            db.collection('books').remove({}, (err, data) => {
                 if (err) {
                     res.json({ Error: 'could not delete' + req.body['_id'] });
                 }
@@ -129,7 +123,6 @@ module.exports = function(app) {
                 bookid: req.params.id,
                 comment: req.body.comment
             }
-            console.log('WTF')
             db.collection('books').findOne(ObjectId(req.params.id), (err, book) => {
                 if (err) {
                     res.json({ error: 'Error find: ' + err });
@@ -145,7 +138,7 @@ module.exports = function(app) {
                             if (err) {
                                 res.json({ error: 'Error find: ' + err });
                             }
-                            res.json({ _id: books._id, title: books.title, comments: comments })
+                            res.json({ _id: book._id, title: book.title, comments: comments })
                         })
                     })
                 }
@@ -162,15 +155,20 @@ module.exports = function(app) {
         if (!req.params.id) {
             res.json({ error: 'no book provide' })
         } else {
-            db.collection('books').findOne(ObjectId(req.params.id)).toArray((err, books) => {
+            MongoClient.connect(CONNECTION_STRING, (err, db) => {
                 if (err) {
-                    res.json({ error: 'no book exists' })
+                    res.json({ error: 'Database error: ' + err });
                 }
-                db.collection('books').deleteOne({ _id: ObjectId(req.params.id) }, (err, data) => {
+                db.collection('books').findOne(ObjectId(req.params.id)).toArray((err, books) => {
                     if (err) {
                         res.json({ error: 'no book exists' })
                     }
-                    res.json({ success: 'delete successful' });
+                    db.collection('books').deleteOne({ _id: ObjectId(req.params.id) }, (err, data) => {
+                        if (err) {
+                            res.json({ error: 'no book exists' })
+                        }
+                        res.json({ success: 'delete successful' });
+                    })
                 })
             })
         }
